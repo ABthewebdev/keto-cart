@@ -1,0 +1,14 @@
+{% extends 'stripe_app/base.html' %}
+
+{% block content %}
+<div>
+    <h1>Shop</h1>
+    <div>
+        {% for product in products %}
+        <div>
+            <p>{{product.name}}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

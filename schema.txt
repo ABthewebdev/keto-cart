@@ -1,0 +1,17 @@
+Product
+1. Id int
+2. Name varchar(255)
+3. Description textfield(255)
+4. Price decimal(5, 2)
+5. In-stock int
+6. Date created
+
+User profile
+1. User int
+2. First Name
+3. Last Name
+4. Email Emailfield(max_length = 254)
+
+Shopping cart
+1. User int
+2. Items JsonField()
