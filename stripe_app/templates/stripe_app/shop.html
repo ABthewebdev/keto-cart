@@ -1,13 +1,14 @@
-{% extends 'stripe_app/base.html' %}
+{% extends 'main/base.html' %}
 
 {% block content %}
 <div>
     <h1>Shop</h1>
     <div>
         {% for product in products %}
-        <div>
+        <a href="product/{{product.id}}">
+            <img src="{{product.image}}" alt="{{product.name}}" width="60px" height="60px">
             <p>{{product.name}}</p>
-        </div>
+        </a>
         {% endfor %}
     </div>
 </div>

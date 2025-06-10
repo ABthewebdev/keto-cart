@@ -1,27 +1,40 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <style>
-        body {
-            background-color: #333;
-        }
-        a {
-            color: white;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
     {% if user.is_authenticated %}
-    {% block content %}
-    {% endblock %}
+    <header>
+        <ul>
+            <li>
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li 
+                hx-get="{% url 'hx_menu_cart' %}"
+                hx-trigger="hx_menu_cart from:body"
+                hx-swap="innerHTML"
+            >
+                {% include 'main/menu-cart.html' %}
+            </li>
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">Logout</button>
+            </form>
+        </ul>
+    </header>
     {% else %}
     <header>
         <a href="/register">Register</a>
         <a href="/login">Login</a>
     </header>
     {% endif %}
+    {% block content %}
+    {% endblock %}
+    <script src="{% static 'js/htmx.min.js' %}"></script>
 </body>
 </html>

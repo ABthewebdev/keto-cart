@@ -1,0 +1,35 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<div>
+    <h1>My cart</h1>
+    <div>
+        <ul>
+            {% for product in cart %}
+            <li>
+                {{product.name}}
+                <form
+                    hx-post="{% url 'update_checkout' product.id %}"
+                    hx-target="#checkout_total"
+                    hx-swap="outerHTML"
+                    hx-trigger="change"
+                >
+                {% csrf_token %}
+                    <select name="quantity" id="quantity">
+                        {% for i in quantity_range %}
+                        <option value="{{i}}" {% if i == product.quantity %}selected{% endif %}>
+                            {{i}}
+                        </option>
+                        {% endfor %}2
+                    </select>
+                </form>
+                <a href="{% url 'remove_from_cart' product.id %}">
+                    Remove
+                </a>
+            </li>
+            {% endfor %}
+            {% include 'main/partials/checkout-total.html' %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

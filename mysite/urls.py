@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from accounts import views as v
 from stripe_app import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,4 +28,4 @@ urlpatterns = [
     path('', include("main.urls")),
     path('shop/', include('stripe_app.urls')),
     path('webhook', views.stripe_webhook, name='stripe_webhook'),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

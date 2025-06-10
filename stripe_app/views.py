@@ -3,49 +3,43 @@ from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
-from .utils import *
-
+from .cart import Cart
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from .utils import *
 from .models import *
+from .forms import *
 endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
 def shop_view(request):
     products_list = stripe.Product.list()
     products = []
     for product in products_list:
-        products.append(product_details(product))
-    return render(request, 'stripe_app/shop.html')
+        products.append(get_product_details(product))
+    return render(request, 'stripe_app/shop.html', {"products": products})
 
-def product_view(request):
-    product_id = 'prod_PzfeBs9rwa8Rno'
+def product_view(request, product_id):
     product = stripe.Product.retrieve(product_id)
-    prices = stripe.Price.list(product=product_id)
-    price = prices.data[0]
-    product_price = price.unit_amount / 100.0
+    product_details = get_product_details(product)
+    cart = Cart(request)
+    product_details['in_cart'] = product_id in cart.cart_session
+    
+    return render(request, 'stripe_app/product.html', {'product': product_details})
 
-    if request.method == "POST":
-        if not request.user.is_authenticated:
-            return redirect(f'{settings.BASE_URL}{reverse("login")}?next={request.get_full_path()}')
-        
-        price_id = request.POST.get('price_id')
-        quantity = int(request.POST.get('quantity'))
-        checkout_session = stripe.checkout.Session.create(
-            line_items = [
-                {
-                    'price': price_id,
-                    'quantity': quantity,
-                },
-            ],
-            payment_method_types = ['card'],
-            mode = 'payment',
-            customer_creation = 'always',
-            success_url = f'{settings.BASE_URL}{reverse("payment_successful")}?session_id={{CHECKOUT_SESSION_ID}}',
-            cancel_url = f'{settings.BASE_URL}{reverse("payment_cancelled")}',
-        )
-        return redirect(checkout_session.url, code=303)
-        
-    return render(request, 'stripe_app/product.html', {'product': product, 'product_price': product_price})
+
+def add_to_cart(request, product_id):
+    cart = Cart(request)
+    cart.add(product_id)
+    
+    product = stripe.Product.retrieve(product_id)
+    product_details = get_product_details(product)
+    product_details['in_cart'] = product_id in cart.cart_session
+
+    response = render(request, 'stripe_app/partials/cart-button.html', {'product': product_details})
+    response['HX-Trigger'] = 'hx_menu_cart'
+    return response
+
 
 def payment_successful(request):
     checkout_session_id = request.GET.get('session_id', None)
@@ -71,8 +65,12 @@ def payment_successful(request):
 
 def payment_cancelled(request):
     return render(request, 'stripe_app/payment_cancelled.html')
-    
 
+@login_required
+def checkout_view(request):
+    form = ShippingForm(initial={'email': request.user.email})
+    return render(request, 'stripe_app/checkout.html', {'form': form})
+    
 @csrf_exempt
 @require_POST
 def stripe_webhook(request):

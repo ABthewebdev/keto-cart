@@ -1,0 +1,5 @@
+{% load static %}
+<a href="{% url 'cart_page' %}" id="menu-cart-button">
+    <img src="{% static 'img/shopping-cart.svg' %}" alt="" height="60px" width="60px"></img>
+    <span>{{cart|length}}</span>
+</a>

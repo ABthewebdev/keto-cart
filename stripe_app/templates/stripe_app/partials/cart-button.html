@@ -1,0 +1,13 @@
+<div id="cart-button">
+    {% if product.in_cart %}
+        <a href="{% url 'add_to_cart' product.id %}">Added to cart</a>
+    {% else %}
+        <a class="button add-to-cart"
+            hx-get="{% url 'add_to_cart' product.id %}"
+            hx-target="#cart-button"
+            hx-swap="outerHTML"
+        >
+            Add to cart
+        </a>
+    {% endif %}
+</div>
