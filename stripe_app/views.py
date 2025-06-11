@@ -49,18 +49,13 @@ def payment_successful(request):
         customer_id = session.customer
         customer = stripe.Customer.retrieve(customer_id)
 
-        line_item = stripe.checkout.Session.list_line_items(checkout_session_id).data[0]
-        UserPayment.objects.get_or_create(
-            user = request.user,
-            stripe_customer = customer_id,
-            stripe_checkout_id = checkout_session_id,
-            stripe_product_id = line_item.price.product,
-            product_name = line_item.description,
-            quantity = line_item.quantity,
-            price = line_item.price.unit_amount / 100.0,
-            currency = line_item.price.currency,
-            has_paid = True
-        )
+        if settings.CART_SESSION_ID in request.session:
+            del request.session[settings.CART_SESSION_ID]
+
+        if settings.DEBUG:
+            checkout = CheckoutSession.objects.get(checkout_id=checkout_session_id)
+            checkout.has_paid = True
+            checkout.save()
     return render(request, 'stripe_app/payment_successful.html', {'customer': customer})
 
 def payment_cancelled(request):
@@ -69,6 +64,25 @@ def payment_cancelled(request):
 @login_required
 def checkout_view(request):
     form = ShippingForm(initial={'email': request.user.email})
+
+    if request.method == "POST":
+        form = ShippingForm(request.POST)
+        if form.is_valid():
+            shipping_info = form.save(commit=False)
+            shipping_info.user = request.user
+            shipping_info.email = form.cleaned_data['email'].lower()
+            shipping_info.save()
+
+            cart = Cart(request)
+            checkout_session = create_checkout_session(cart, shipping_info.email)
+
+            CheckoutSession.objects.create(
+                checkout_id = checkout_session.id,
+                shipping_info = shipping_info,
+                total_cost = cart.get_total_cost()
+            )
+
+            return redirect(checkout_session.url, code=303)
     return render(request, 'stripe_app/checkout.html', {'form': form})
     
 @csrf_exempt
@@ -85,14 +99,14 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret
         )
-    except ValueError:
+    except:
         # Invalid payload
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError:
-        # Invalid signature
-        return HttpResponse(status=400)
-    
-    # Handle the event
-    print('Unhandled event type {}'.format(event['type']))
-    
-    return JsonResponse({'success': True})
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        checkout_session_id = session.get('id')
+        checkout = CheckoutSession.objects.get(checkout_id=checkout_session_id)
+        checkout.has_paid = True
+        checkout.save()
+
+    return HttpResponse(status=200)

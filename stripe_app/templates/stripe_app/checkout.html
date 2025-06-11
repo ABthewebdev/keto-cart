@@ -1,0 +1,26 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<h1>checkout</h1>
+<form method="POST">
+    {% csrf_token %}
+    <div>
+        {{form.email}}
+        {{form.phone}}
+    </div>
+    <div>
+        <h2>Delivery address</h2>
+        <div>
+            <div>{{form.first_name}}</div>
+            <div>{{form.last_name}}</div>
+        </div>
+        <div>
+            {{form.address_line_one}}
+            {{form.address_line_two}}
+        </div>
+        <div>{{form.city}}</div>
+        <div>{{form.zip_code}}</div>
+    </div>
+    <button type="submit">Confirm</button>
+</form>
+{% endblock %}

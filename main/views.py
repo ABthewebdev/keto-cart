@@ -13,6 +13,7 @@ def cart_page(request):
     quantity_range = list(range(1, 11))
     return render(request, 'main/cart-page.html', {"quantity_range": quantity_range})
 
+
 def update_checkout(request, product_id):
     quantity = int(request.POST.get('quantity', 1))
     cart = Cart(request)

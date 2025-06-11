@@ -22,7 +22,7 @@ class ShippingInfo(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     address_line_one = models.CharField(max_length=255)
-    address_line_two = models.CharField(max_length=255)
+    address_line_two = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100)
     zip_code = models.CharField(max_length=10)
 
